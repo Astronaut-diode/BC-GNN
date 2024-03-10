@@ -22,9 +22,9 @@ for type in os.listdir(dataset_path):
             if str(label['contract_name']).startswith(basename + "-"):
                 new_name = str(label['contract_name']).replace(basename, str(count + 1), 1).replace(".sol", ".bin")
                 new_label[new_name] = label['targets']
-        utils.create_folder_if_not_exists(f'{dataset_path}/{type}/new_dataset/{count + 1}')
-        shutil.copy(f'{dataset_type_path}/{file}', f'{dataset_path}/{type}/new_dataset/{count + 1}/{count + 1}.sol')
-    json_file = f"{dataset_path}/{type}/new_contract_labels.json"
+        utils.create_folder_if_not_exists(f'{dataset_path}/{type}/bytecode/{count + 1}')
+        shutil.copy(f'{dataset_type_path}/{file}', f'{dataset_path}/{type}/bytecode/{count + 1}/{count + 1}.sol')
+    json_file = f"{dataset_path}/{type}/labels.json"
 
     if not os.path.exists(json_file):
         utils.save_json(new_label, json_file)
@@ -50,17 +50,22 @@ for type in os.listdir(dataset_path):
         cmd = f"/root/anaconda3/envs/lunikhod/bin/solc-select use {version}"
         subprocess.run(cmd, shell=True)
         for i in range(1, os.listdir(dataset_type_path).__len__(), 1):
-            if os.listdir(f"{dataset_path}/{type}/new_dataset/{i}").__len__() == 1:
-                cmd = f"/root/anaconda3/envs/lunikhod/bin/solc --bin -o {dataset_path}/{type}/new_dataset/{i} {dataset_path}/{type}/new_dataset/{i}/{i}.sol"
+            if os.listdir(f"{dataset_path}/{type}/bytecode/{i}").__len__() == 1:
+                cmd = f"/root/anaconda3/envs/lunikhod/bin/solc --bin -o {dataset_path}/{type}/bytecode/{i} {dataset_path}/{type}/bytecode/{i}/{i}.sol"
                 utils.tip(f"编译{i}文件夹")
                 subprocess.run(cmd, shell=True)
 
     total_count = 0
-    for i in range(1, os.listdir(dataset_type_path).__len__(), 1):
-        l = os.listdir(f"{dataset_path}/{type}/new_dataset/{i}")
+    for i in range(1, os.listdir(dataset_type_path).__len__() + 1, 1):
+        l = os.listdir(f"{dataset_path}/{type}/bytecode/{i}")
         total_count += l.__len__()
         for f in l:
             if not f.endswith(".sol"):
                 new_filename = f"{i}-{f.split('.')[0]}.bin"
-                os.rename(os.path.join(f"{dataset_path}/{type}/new_dataset/{i}", f), os.path.join(f"{dataset_path}/{type}/new_dataset/{i}", new_filename))
+                os.rename(os.path.join(f"{dataset_path}/{type}/bytecode/{i}", f), os.path.join(f"{dataset_path}/{type}/bytecode/{i}", new_filename))
                 assert new_label.__contains__(new_filename), new_filename + "标签出现缺失"
+
+    for i in range(1, os.listdir(dataset_type_path).__len__() + 1, 1):
+        l = os.listdir(f"{dataset_path}/{type}/bytecode/{i}")
+        if l.__len__() == 1:
+            print(f"{dataset_path}/{type}/bytecode/{i}")
