@@ -2,6 +2,8 @@ import utils
 import os
 import config
 from create_control_flow_graph import create_control_flow_graph
+from create_data_flow_graph import create_data_flow_graph
+from Node import Node
 
 
 # 读取bin文件中的内容，返回对应的二进制结果
@@ -53,7 +55,14 @@ def convertToOpCodesAndGraph(wait_detect_project):
             # 根据文件的名字以及字节码，创建对应的操作码文件。将所有的合约的操作码，全部捏到一起。
             res_json = create_opcodes(wait_detect_bin,
                                       f'{config.TRAIN_DATA_DIR_PATH}/{wait_detect_project}/{opcodes_file_name}')
-            create_control_flow_graph(res_json)  # 根据当前二进制的文件转换为操作码以后的内容，构造控制流图。
+            # 这是整张图。
+            G = []
+            for index, opcode in enumerate(res_json["opcodes"]):
+                G.append(Node(index + 1, opcode, index))
+            assert len(G) * 2 == len(res_json['bytecode'])
+            create_control_flow_graph(res_json, G)  # 根据当前二进制的文件转换为操作码以后的内容，构造控制流图。
+            create_data_flow_graph(res_json, G)  # 根据当前二进制的文件转换为操作码以后的内容，构造控制流图。
+            utils.save_json(res_json, f'{config.TRAIN_DATA_DIR_PATH}/{wait_detect_project}/{opcodes_file_name}')
 
 
 # 从start开始，读取length字节的内容
@@ -127,6 +136,8 @@ def create_opcodes(bin_code, opcodes_file_path):
         'deployed_opcodes': deployed_code,
         'runtime_opcodes': runtime_code,
         'auxdata_opcodes': auxdata,
+        'CFG': [],
+        'DFG': [],
         'readme': 'filepath中存储的是对应的操作码文件的保存路径' +
                   "bytecode中存储的是全部的二进制代码；" +
                   "opcodes中存储的是全部的操作码，其中包含了NULL进行占位，存储的格式是数组，这样方便取，所以索引从0开始" +
@@ -136,9 +147,9 @@ def create_opcodes(bin_code, opcodes_file_path):
                   "auxdata_opcodes_range保存的是部署的字节码在bytecode中的范围，左闭右开，保存的格式是数组" +
                   "deployed_opcodes中部署的是部署代码的操作码，保存的格式是数组，并且没有使用NULL进行占位" +
                   "runtime_opcodes中部署的是部署代码的操作码，保存的格式是数组，并且没有使用NULL进行占位" +
-                  "auxdata_opcodes中部署的是部署代码的操作码，保存的格式是数组，并且没有使用NULL进行占位"
+                  "auxdata_opcodes中部署的是部署代码的操作码，保存的格式是数组，并且没有使用NULL进行占位" +
+                  "CFG中保存的是哪个节点指向了哪个节点，使用的是索引，DFG同理。"
     }
-    utils.save_json(res_json, opcodes_file_path)
     return res_json
 
 
