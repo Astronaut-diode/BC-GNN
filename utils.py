@@ -20,6 +20,7 @@ def save_json(content, path):
     json_file = open(path, 'w')
     json.dump(content, json_file, ensure_ascii=False)
     json_file.close()
+    success(f"文件{path}保存成功！")
 
 
 # 递归创建并不存在的文件夹

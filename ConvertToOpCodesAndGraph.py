@@ -10,32 +10,33 @@ from Node import Node
 def read_bin(bin_file):
     wait_detect_bin = []
     with open(bin_file, 'r') as bin:
-        for count, line in enumerate(bin.readlines()):
-            if line.__contains__("======"):  # 这是标题行，可以忽略
-                continue
-            elif line.__contains__("Binary:"):  # 这是启动行，一样可以忽略:
-                continue
-            elif line == "\n":  # 这一行是空行，没有信息，可以不采集。
-                continue
-            else:  # 这是我们等待训练或者检测的内容。
-                start_index = 0
-                first_index = line.find('_') - 1
-                while 0 < first_index < len(line):
-                    if line[first_index + 1] == '_':  # 从非_进入_状态
-                        first_index = first_index + 1
-                        wait_detect_bin.append(line[start_index:first_index].upper())
-                        while line[first_index + 1] == '_':
-                            first_index = first_index + 1
-                            continue
-                        while line[first_index + 1] != '_':
-                            first_index = first_index + 1
-                            continue
-                        while line[first_index + 1] == '_':
-                            first_index = first_index + 1
-                            continue
-                        start_index = first_index + 1
-                        first_index = line.find('_', start_index) - 1
-                wait_detect_bin.append(line[start_index:].replace('\n', '').upper())
+        wait_detect_bin.append(bin.readline().replace('\n', '').upper())
+        # for count, line in enumerate(bin.readlines()):
+        #     if line.__contains__("======"):  # 这是标题行，可以忽略
+        #         continue
+        #     elif line.__contains__("Binary:"):  # 这是启动行，一样可以忽略:
+        #         continue
+        #     elif line == "\n":  # 这一行是空行，没有信息，可以不采集。
+        #         continue
+        #     else:  # 这是我们等待训练或者检测的内容。
+        #         start_index = 0
+        #         first_index = line.find('_') - 1
+        #         while 0 < first_index < len(line):
+        #             if line[first_index + 1] == '_':  # 从非_进入_状态
+        #                 first_index = first_index + 1
+        #                 wait_detect_bin.append(line[start_index:first_index].upper())
+        #                 while line[first_index + 1] == '_':
+        #                     first_index = first_index + 1
+        #                     continue
+        #                 while line[first_index + 1] != '_':
+        #                     first_index = first_index + 1
+        #                     continue
+        #                 while line[first_index + 1] == '_':
+        #                     first_index = first_index + 1
+        #                     continue
+        #                 start_index = first_index + 1
+        #                 first_index = line.find('_', start_index) - 1
+        #         wait_detect_bin.append(line[start_index:].replace('\n', '').upper())
     return wait_detect_bin
 
 
@@ -45,7 +46,7 @@ def convertToOpCodesAndGraph(wait_detect_project):
     utils.create_folder_if_not_exists(f'{config.TRAIN_DATA_DIR_PATH}/{wait_detect_project}')  # 先检测对应的操作码工程文件夹是否已经存在
     file_list = os.listdir(f'{config.TRAIN_DATA_DIR_PATH}/{wait_detect_project}')  # 获取对应的已经生成的操作码文件列表
     for file in os.listdir(f'{config.BYTECODE_DIR_PATH}/{wait_detect_project}'):
-        if file.endswith(".bin"):  # 判断是否存在对应的操作码文件了
+        if file.endswith(".bin") and os.path.getsize(f'{config.BYTECODE_DIR_PATH}/{wait_detect_project}/{file}') > 0:  # 判断是否存在对应的操作码文件了
             bin_file = f'{config.BYTECODE_DIR_PATH}/{wait_detect_project}/{file}'
             basename = os.path.basename(bin_file).split('.')[0]
             opcodes_file_name = basename + ".json"
@@ -148,7 +149,7 @@ def create_opcodes(bin_code, opcodes_file_path):
                   "deployed_opcodes中部署的是部署代码的操作码，保存的格式是数组，并且没有使用NULL进行占位" +
                   "runtime_opcodes中部署的是部署代码的操作码，保存的格式是数组，并且没有使用NULL进行占位" +
                   "auxdata_opcodes中部署的是部署代码的操作码，保存的格式是数组，并且没有使用NULL进行占位" +
-                  "CFG中保存的是哪个节点指向了哪个节点，使用的是索引，DFG同理。"
+                  "CFG中保存的是哪个节点指向了哪个节点，使用的是索引，DFG同理。",
     }
     return res_json
 
