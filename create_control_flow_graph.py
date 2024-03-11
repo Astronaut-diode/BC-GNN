@@ -12,4 +12,4 @@ def create_control_flow_graph(opcodes_json, G):
         source_id = node.node_id
         for cfg_target_node in node.cfg_edge:
             dest_id = cfg_target_node.node_id
-            opcodes_json['CFG'].append([source_id, dest_id])
+            opcodes_json['CFG'].append([source_id - 1, dest_id - 1])  # 注意，后期pytorch需要的id是索引要从0开始的。

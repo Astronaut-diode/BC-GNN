@@ -12,4 +12,4 @@ def create_data_flow_graph(opcodes_json, G):
         source_id = node.node_id
         for cfg_target_node in node.dfg_edge:
             dest_id = cfg_target_node.node_id
-            opcodes_json['DFG'].append([source_id, dest_id])
+            opcodes_json['DFG'].append([source_id - 1, dest_id - 1])

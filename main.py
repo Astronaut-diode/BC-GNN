@@ -7,6 +7,8 @@ from ConvertToOpCodesAndGraph import convertToOpCodesAndGraph
 from create_node_feature import create_node_feature
 from gensim.models.word2vec import Word2Vec
 from get_word2vec import get_word2vec
+from contract_classification_train import contract_classification_train
+from contract_classification_dataset import contract_classification_dataset
 
 if __name__ == '__main__':
     start_time = datetime.datetime.now()
@@ -52,5 +54,9 @@ if __name__ == '__main__':
                                     f'{config.TRAIN_DATA_DIR_PATH}/{train_dir}/{json_file.replace(".json", ".graph")}',
                                     word2vec_model, label_dict)
 
+    # 加载数据集
+    total_dataset = contract_classification_dataset(config.CLASSIFICATION_DIR_PATH)
+    if config.run_mode == 'train':
+        contract_classification_train(total_dataset)
     end_time = datetime.datetime.now()
     utils.tip("程序一共执行了:" + str(end_time - start_time) + "秒")
