@@ -11,11 +11,22 @@ def create_node_feature(json_path, graph_path, word2vec_model, label_dict):
         return
     json_file = open(json_path, 'r')
     content = json.load(json_file)
+
+    actual_id_list = set()  # 找出所有参与过程的节点。
+    for edge in content['CFG']:
+        actual_id_list.add(edge[0])
+        actual_id_list.add(edge[1])
+    for edge in content['DFG']:
+        actual_id_list.add(edge[0])
+        actual_id_list.add(edge[1])
+    actual_id_list = list(actual_id_list)
+    actual_id_list = sorted(actual_id_list)
+
     node_feature_list = []
-    for opcode in content['opcodes']:
-        node = Node(-1, opcode, -1)  # 这是为了快速获取需要用于获取节点的节点内容以及节点类型。
+    for actual_id in actual_id_list:
+        node = Node(-1, content['opcodes'][actual_id], -1)  # 这是为了快速获取需要用于获取节点的节点内容以及节点类型。
         node_feature = word2vec_model[node.node_type]
-        opcodes = opcode.split(' ')
+        opcodes = content['opcodes'][actual_id].split(' ')
         for op in opcodes:
             node_feature = node_feature + word2vec_model[op]
         node_feature = node_feature.tolist()
@@ -23,6 +34,17 @@ def create_node_feature(json_path, graph_path, word2vec_model, label_dict):
     # 准备找到当前图对应的标签是什么
     contract_name = os.path.basename(content['filepath']).split(".")[0]
     target_name = f'{contract_name}.bin'
+
+    hash_map = {}
+    for index, actual_id in enumerate(actual_id_list):  # 更改CFG和DFG中的边指向的序号，这样就可以去除掉一切不必要的节点。
+        hash_map[actual_id] = index
+    for edge in content['CFG']:
+        edge[0] = hash_map[edge[0]]
+        edge[1] = hash_map[edge[1]]
+    for edge in content['DFG']:
+        edge[0] = hash_map[edge[0]]
+        edge[1] = hash_map[edge[1]]
+
     # 最终需要保存的图数据。
     graph_data = {
         'node_feature': node_feature_list,

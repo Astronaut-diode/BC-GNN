@@ -60,7 +60,7 @@ def convertToOpCodesAndGraph(wait_detect_project):
             G = []
             for index, opcode in enumerate(res_json["opcodes"]):
                 G.append(Node(index + 1, opcode, index))
-            assert len(G) * 2 == len(res_json['bytecode'])
+            assert len(G) == len(res_json['opcodes'])
             create_control_flow_graph(res_json, G)  # 根据当前二进制的文件转换为操作码以后的内容，构造控制流图。
             create_data_flow_graph(res_json, G)  # 根据当前二进制的文件转换为操作码以后的内容，构造控制流图。
             utils.save_json(res_json, f'{config.TRAIN_DATA_DIR_PATH}/{wait_detect_project}/{opcodes_file_name}')
@@ -125,6 +125,7 @@ def create_opcodes(bin_code, opcodes_file_path):
         else:
             utils.error("汇报，有新的操作码，0x" + str(value) + "还未加入操作列表!")
             exit(config.NEW_OPCODES)
+    opcodes.append("CONTRACT")  # 外部合约，执行CALL指令以及CALLCODE的代码时就可以进行调用。这永远设定为倒数第一个节点。
     res_json = {
         'filepath': opcodes_file_path,
         'bytecode': bin,

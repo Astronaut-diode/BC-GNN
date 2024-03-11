@@ -1,6 +1,10 @@
 import os
 import utils
 import argparse
+import sys
+
+# 设置最大递归层数为5000
+sys.setrecursionlimit(5000)
 
 # 当前这个BC-GNN项目的路径。
 BC_GNN_PROJECT_DIR_PATH = os.path.abspath(os.curdir)
@@ -27,44 +31,46 @@ NEW_OPCODES = -102
 ############################## ERROR CODE ##############################
 
 # 词库文件当中，保存的每个单词的维度向量
-encode_dim = 3
+encode_dim = 300
 # 训练集中，用多少为比例进行划分。
 train_test_split_percent = 0.7
 # 计算度量标准的时候使用的参数
 beta = 1
 epsilon = 1e-8
+# 攻击的最佳阈值
+threshold = 0
 
 # 默认会先加载config配置文件夹，然后设定好程序运行的配置。
 parser = argparse.ArgumentParser(description='参数表')
-parser.add_argument('--create_word2vec', type=str, default='none',
-                    help="针对运行预训练模型的模式(默认none):\n"
-                         "1.none:不创建预训练模型，也不更新\n"
-                         "2.create:创建预训练模型的时候用的。\n")
 parser.add_argument('--run_mode', type=str, default='none',
                     help="区分是训练还是预测(默认是none):\n"
                          "1.train:训练。\n"
                          "2.predict:预测。")
+parser.add_argument('--create_word2vec', type=str, default='none',
+                    help="针对运行预训练模型的模式(默认none):\n"
+                         "1.none:不创建预训练模型，也不更新\n"
+                         "2.create:创建预训练模型的时候用的。\n")
 parser.add_argument('--device', type=str, default='cuda:0',
                     help="区分使用的设备，是CPU还是GPU(默认为cuda:0):\n"
                          "1.输入cpu:那就直接使用cpu。\n"
                          "2.输入cuda:i:那就直接使用第i张显卡。")
-parser.add_argument('--learning_rate', type=float, default=0.005,
-                    help="使用的学习率(默认为0.005):\n"
+parser.add_argument('--learning_rate', type=float, default=0.02,
+                    help="使用的学习率(默认为0.02):\n"
                          "直接输入浮点数。\n")
-parser.add_argument('--weight_decay', type=float, default=0.005,
-                    help="模型权重正则化的参数(默认为0.005):\n"
-                         "直接输入浮点数。\n")
-parser.add_argument('--learning_change_gamma', type=float, default=0.75,
-                    help="学习率更新的倍率(默认为0.75):\n"
+parser.add_argument('--weight_decay', type=float, default=0.0001,
+                    help="模型权重正则化的参数(默认为0.0001):\n"
                          "直接输入浮点数。\n")
 parser.add_argument('--dropout_probability', type=float, default=0.1,
                     help="dropout的概率(默认为0.1):\n"
                          "直接输入浮点数。\n")
-parser.add_argument('--learning_change_epoch', type=int, default=10,
-                    help="学习率更新epoch(默认为10):\n"
+parser.add_argument('--learning_change_gamma', type=float, default=0.1,
+                    help="学习率更新的倍率(默认为0.1):\n"
+                         "直接输入浮点数。\n")
+parser.add_argument('--learning_change_epoch', type=int, default=30,
+                    help="学习率更新epoch(默认为30):\n"
                          "直接输入整数。\n")
-parser.add_argument('--epoch_size', type=int, default=32,
-                    help="批处理数量(默认为32):\n"
+parser.add_argument('--epoch_size', type=int, default=100,
+                    help="批处理数量(默认为100):\n"
                          "直接输入整数。\n")
 parser.add_argument('--batch_size', type=int, default=32,
                     help="一次同时处理多少数据(默认为32):\n"

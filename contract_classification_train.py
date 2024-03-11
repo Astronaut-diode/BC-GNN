@@ -23,19 +23,24 @@ def contract_classification_train(total_dataset):
     # 开始训练
     model.train()
     for epoch in range(config.epoch_size):
+        train_all_predicts = torch.tensor([]).to(config.device)  # 准备用于求出最后的阈值
+        train_all_labels = torch.tensor([]).to(config.device)
         # 当前这一轮epoch的总损失值
         total_loss_of_now_epoch = 0.0
         # 更新学习率
         scheduler.step()
-        for index, train in enumerate(train_loader):
+        for batch_index, train in enumerate(train_loader):
             train = train.to(config.device)
             optimizer.zero_grad()
             predict = model(train)
+            train_all_predicts = torch.cat((train_all_predicts, predict.reshape(-1)), dim=0)
+            train_all_labels = torch.cat((train_all_labels, train.y), dim=0)
             loss = criterion(predict.reshape(-1), train.y)  # 切换为一维数组进行损失的计算。
             loss.backward()
             optimizer.step()
             total_loss_of_now_epoch += loss.item()
         utils.tip(f"{epoch + 1}.结束，总损失值为: {total_loss_of_now_epoch}")
+        config.threshold = get_best_metric(train_all_predicts, train_all_labels)
     train_end_time = datetime.datetime.now()
     test_start_time = datetime.datetime.now()
     utils.tip("训练完毕，开始验证。")
@@ -69,13 +74,13 @@ def contract_classification_train(total_dataset):
         node_count += sample.x.shape[0]
         edge_count += sample.edge_index.shape[1]
         mali_count += int(sample.y.item())
-    utils.tip(f"本次测试集中，一共有{node_count}个节点，{edge_count}条边，良性合约为{len(train_dataset) - mali_count}, 恶性合约为{mali_count}")
+    utils.tip(f"本次测试集中，一共有{node_count}个节点，{edge_count}条边，良性合约为{len(test_dataset) - mali_count}, 恶性合约为{mali_count}")
     cal_score(predict_labels, y_labels)
 
 
 # 根据计算出的标签以及原始标签，求出对应的评估指标。
 def cal_score(predict_labels, y_labels):
-    predict_matrix = (predict_labels >= torch.as_tensor(data=[0.5]).to(config.device)).add(0)
+    predict_matrix = (predict_labels >= torch.as_tensor(data=[config.threshold]).to(config.device)).add(0)
     tp = torch.sum(torch.logical_and(y_labels, predict_matrix), dim=0).reshape(-1, 1)
     fp = torch.sum(torch.logical_and(torch.sub(1, y_labels), predict_matrix), dim=0).reshape(-1, 1)
     tn = torch.sum(torch.logical_and(torch.sub(1, y_labels), torch.sub(1, predict_matrix)), dim=0).reshape(-1, 1)
@@ -88,3 +93,42 @@ def cal_score(predict_labels, y_labels):
         tp.mul(1 + config.beta ** 2).add(fn.mul(config.beta ** 2).add(fp).add(config.epsilon))).item()
     utils.tip(f"tp:{tp.item()}, fp:{fp.item()}, tn:{tn.item()}, fn:{fn.item()}")
     utils.tip(f"accuracy:{accuracy}, precision:{precision}, recall:{recall}, f_score:{f_score}")
+
+
+# 准备找出效果最好的阈值，待会用于分类使用。
+def get_best_metric(train_all_predicts, train_all_labels):
+    # 求出其中的最佳值，然后返回。
+    best_res = {"probability": 0, "accuracy": 0, "precision": 0, "recall": 0, "f_score": 0}
+    # 取出所有的不同的概率，然后将概率转换为0和1的predict_matrix矩阵,注意，如果种类太多，会导致GPU都存不下，所以需要少取一些，这里取步长为100好了。
+    unique_probability = torch.unique(train_all_predicts).reshape(-1, 1)
+    # 通过步长重新选取，免得取得太多了，内存爆炸。
+    unique_probability = unique_probability[::4]
+    predict_matrix = (train_all_predicts.view(1, -1) >= unique_probability.view(-1, 1)).add(0)
+    # 根据标签矩阵和预测矩阵，求出四个基础标签。
+    tp = torch.sum(torch.logical_and(train_all_labels, predict_matrix), dim=1).reshape(-1, 1)
+    fp = torch.sum(torch.logical_and(torch.sub(1, train_all_labels), predict_matrix), dim=1).reshape(-1, 1)
+    tn = torch.sum(torch.logical_and(torch.sub(1, train_all_labels), torch.sub(1, predict_matrix)), dim=1).reshape(-1,
+                                                                                                                   1)
+    fn = torch.sum(torch.logical_and(train_all_labels, torch.sub(1, predict_matrix)), dim=1).reshape(-1, 1)
+    # 由四个基础标签求出对应的四种参数。
+    accuracy = tp.add(tn).div(tp.add(fp).add(tn).add(fn))
+    precision = tp.div(tp.add(fp))
+    recall = tp.div(tp.add(fn))
+    f_score = tp.mul(1 + config.beta ** 2).div(
+        tp.mul(1 + config.beta ** 2).add(fn.mul(config.beta ** 2).add(fp).add(config.epsilon)))
+    # 根据p和r的和，决定谁是效果最好的，直接返回这组结果。
+    # best_sample_index = precision.add(recall).add(accuracy).add(f_score).argmax(dim=0)
+    # 改成求出最大的f分数
+    best_sample_index = f_score.argmax(dim=0)
+    # 取出每一种度量标准中的最大得分。
+    best_res["probability"] = unique_probability[best_sample_index, 0]
+    best_res["accuracy"] = accuracy[best_sample_index, 0]
+    best_res["precision"] = precision[best_sample_index, 0]
+    best_res["recall"] = recall[best_sample_index, 0]
+    best_res["f_score"] = f_score[best_sample_index, 0]
+    utils.tip(f"当使用最好的阈值{best_res['probability'].item()}时，得到的结果为:")
+    utils.tip(f'accuracy:{best_res["accuracy"].item()}')
+    utils.tip(f'precision:{best_res["precision"].item()}')
+    utils.tip(f'recall:{best_res["recall"].item()}')
+    utils.tip(f'f_score:{best_res["f_score"].item()}')
+    return best_res["probability"]

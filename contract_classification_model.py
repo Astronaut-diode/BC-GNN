@@ -11,14 +11,26 @@ import torch
 class contract_classification_model(MessagePassing):
     def __init__(self):
         super(contract_classification_model, self).__init__()
-        self.RGCNconv1 = RGCNConv(in_channels=3, out_channels=1, num_relations=2)
-        self.final_Linear = Linear(in_channels=1, out_channels=1)
+        self.RGCNconv1 = RGCNConv(in_channels=300, out_channels=64, num_relations=2)
+        self.RGCNconv2 = RGCNConv(in_channels=64, out_channels=64, num_relations=2)
+        self.RGCNconv3 = RGCNConv(in_channels=64, out_channels=16, num_relations=2)
+        self.RGCNconv4 = RGCNConv(in_channels=16, out_channels=8, num_relations=2)
+        self.final_Linear = Linear(in_channels=8, out_channels=1)
         self.dropout = Dropout(p=config.dropout_probability)
         self.relu = ReLU()
         self.sigmoid = Sigmoid()
 
     def forward(self, data):
         x = self.RGCNconv1(data.x, data.edge_index, data.edge_attr)
+        x = self.dropout(x)
+        x = self.relu(x)
+        x = self.RGCNconv2(x, data.edge_index, data.edge_attr)
+        x = self.dropout(x)
+        x = self.relu(x)
+        x = self.RGCNconv3(x, data.edge_index, data.edge_attr)
+        x = self.dropout(x)
+        x = self.relu(x)
+        x = self.RGCNconv4(x, data.edge_index, data.edge_attr)
         x = self.dropout(x)
         x = self.relu(x)
         x = global_mean_pool(x, data.batch)  # 全局均值池化

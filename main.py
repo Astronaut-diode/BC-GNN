@@ -12,14 +12,14 @@ from contract_classification_dataset import contract_classification_dataset
 
 if __name__ == '__main__':
     start_time = datetime.datetime.now()
-    for wait_detect_project in os.listdir(config.BYTECODE_DIR_PATH):
+    for wait_detect_project in sorted(os.listdir(config.BYTECODE_DIR_PATH)):
         convertToOpCodesAndGraph(wait_detect_project)  # 将目标文件夹中的字节码转换为对应的操作码，并保存到json文件中。
 
     # 至此，全部转换为了操作码，并构建了数据流图和控制流图，都保存到了json文件中。读取所有的指令组以及指令的类型，用于构建对应的语料库，最终用于训练。
     if (config.create_word2vec == "create" or not os.path.exists(config.CORPUS_FILE_PATH)) or \
             config.create_word2vec == "update":
         sentences = []
-        for train_dir in os.listdir(config.TRAIN_DATA_DIR_PATH):
+        for train_dir in sorted(os.listdir(config.TRAIN_DATA_DIR_PATH)):
             get_word2vec(f"{config.TRAIN_DATA_DIR_PATH}/{train_dir}", sentences)
 
     if config.create_word2vec == "create" or not os.path.exists(config.CORPUS_FILE_PATH):  # 创建词向量模型
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     label_dict = json.load(label_file)
     label_file.close()
     # 根据模型，创建所有图文件向量化以后的信息。
-    for train_dir in os.listdir(config.TRAIN_DATA_DIR_PATH):
+    for train_dir in sorted(os.listdir(config.TRAIN_DATA_DIR_PATH)):
         for json_file in os.listdir(f'{config.TRAIN_DATA_DIR_PATH}/{train_dir}'):
             if json_file.endswith(".json"):  # 只有json文件才需要创建对应的向量化文件。
                 create_node_feature(f'{config.TRAIN_DATA_DIR_PATH}/{train_dir}/{json_file}',
