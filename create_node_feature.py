@@ -25,7 +25,7 @@ def create_node_feature(json_path, graph_path, word2vec_model, label_dict):
     node_feature_list = []
     for actual_id in actual_id_list:
         node = Node(-1, content['opcodes'][actual_id], -1)  # 这是为了快速获取需要用于获取节点的节点内容以及节点类型。
-        node_feature = word2vec_model[node.node_type]
+        node_feature = [0.0] * config.encode_dim  # 因为节点类型的内容无法直接转换为向量了，所以需要一开始创建一个内容为0的数组。
         opcodes = content['opcodes'][actual_id].split(' ')
         for op in opcodes:
             node_feature = node_feature + word2vec_model[op]

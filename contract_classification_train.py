@@ -80,7 +80,7 @@ def contract_classification_train(total_dataset):
 
 # 根据计算出的标签以及原始标签，求出对应的评估指标。
 def cal_score(predict_labels, y_labels):
-    predict_matrix = (predict_labels >= torch.as_tensor(data=[config.threshold]).to(config.device)).add(0)
+    predict_matrix = (predict_labels <= torch.as_tensor(data=[config.threshold]).to(config.device)).add(0)
     tp = torch.sum(torch.logical_and(y_labels, predict_matrix), dim=0).reshape(-1, 1)
     fp = torch.sum(torch.logical_and(torch.sub(1, y_labels), predict_matrix), dim=0).reshape(-1, 1)
     tn = torch.sum(torch.logical_and(torch.sub(1, y_labels), torch.sub(1, predict_matrix)), dim=0).reshape(-1, 1)

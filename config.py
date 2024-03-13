@@ -54,23 +54,23 @@ parser.add_argument('--device', type=str, default='cuda:0',
                     help="区分使用的设备，是CPU还是GPU(默认为cuda:0):\n"
                          "1.输入cpu:那就直接使用cpu。\n"
                          "2.输入cuda:i:那就直接使用第i张显卡。")
-parser.add_argument('--learning_rate', type=float, default=0.02,
+parser.add_argument('--learning_rate', type=float, default=0.3,
                     help="使用的学习率(默认为0.02):\n"
                          "直接输入浮点数。\n")
-parser.add_argument('--weight_decay', type=float, default=0.0001,
+parser.add_argument('--weight_decay', type=float, default=0.03,
                     help="模型权重正则化的参数(默认为0.0001):\n"
                          "直接输入浮点数。\n")
 parser.add_argument('--dropout_probability', type=float, default=0.1,
                     help="dropout的概率(默认为0.1):\n"
                          "直接输入浮点数。\n")
-parser.add_argument('--learning_change_gamma', type=float, default=0.1,
+parser.add_argument('--learning_change_gamma', type=float, default=0.3,
                     help="学习率更新的倍率(默认为0.1):\n"
                          "直接输入浮点数。\n")
-parser.add_argument('--learning_change_epoch', type=int, default=30,
+parser.add_argument('--learning_change_epoch', type=int, default=10,
                     help="学习率更新epoch(默认为30):\n"
                          "直接输入整数。\n")
-parser.add_argument('--epoch_size', type=int, default=100,
-                    help="批处理数量(默认为100):\n"
+parser.add_argument('--epoch_size', type=int, default=50,
+                    help="分多少世代(默认为50):\n"
                          "直接输入整数。\n")
 parser.add_argument('--batch_size', type=int, default=32,
                     help="一次同时处理多少数据(默认为32):\n"

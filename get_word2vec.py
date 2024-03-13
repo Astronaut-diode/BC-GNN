@@ -14,6 +14,6 @@ def get_word2vec(train_dir, sentences):
                 if (op != "INVALID" and str(op).__contains__("INVALID")) or str(op).__contains__("NULL"):
                     continue
                 node = Node(-1, op, -1)  # 这是为了快速获取需要用于获取节点的节点内容以及节点类型。
-                sentences.append(node.node_type)
+                # sentences.append(node.node_type)  这里删除了这一行，是因为我不想要因为节点类型而影响到最终的效果。
                 sentences.extend(node.node_content.split(' '))
             json_file.close()
