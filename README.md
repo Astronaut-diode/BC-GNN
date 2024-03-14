@@ -5,17 +5,23 @@
 ```shell
 (lunikhod) root@0efc54cd086a:~/BC-GNN# tree
 .
+|-- contract_classification_dataset.py  # 为模型创建数据集。
+|-- contract_classification_model.py  # 模型。
+|-- contract_classification_train.py  # 训练的过程。
 |-- ConvertToOpcodesAndGraph.py  # 将存放在原始的字节码文件夹中的字节码文件进行文件处理，并转换为图结构。
 |-- create_control_flow_graph.py  # 创建控制流图。
+|-- create_data_flow_graph.py  # 创建数据流图。
+|-- create_node_feature.py  # 向量化并保存到graph文件中。
+|-- get_word2vec.py  # 获取所有的相关词向量
 |-- README.md
 |-- config.py  # 配置文件
 |-- main.py  # 主入口
 |-- resources  # 资源文件夹
 |   |-- bytecode  # 存放待检测的工程项目。
-|   |   `-- 1  # 工程项目的名字
+|   |   |-- 1  # 工程项目的名字
 |   |       |-- A.bin # 待检测的字节码文件
-|   `-- train  # 保存数据处理以后的操作码的位置。
-|   |   `-- 1  # 工程项目的名字
+|   |-- train  # 保存数据处理以后的操作码的位置。
+|   |   |-- 1  # 工程项目的名字
 |   |       |-- A.json # 字节码文件生成的操作码，并以json格式保存
 |-- utils.py  # 一些工具函数。
 |-- Node.py  # 节点类。
@@ -26,4 +32,6 @@
 |       |-- contract_labels.json  # 对应的原始的标签文件。
 |       |-- bytecode  # 里面就保存处理以后的字节码文件。
 |       |-- labels.json  # 存储的是字节码文件对应的标签文件。 
+|-- dataset.zip  # 字节码数据集的压缩包。
+|-- rt_dataset.zip  # 仅包含runtime部分字节码的压缩包。
 ```
