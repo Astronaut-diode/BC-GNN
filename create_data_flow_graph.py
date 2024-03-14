@@ -5,7 +5,12 @@ import utils
 # 直接传入操作码的json文件内容，用于构造控制流图。
 def create_data_flow_graph(opcodes_json, G):
     #################先假设控制流图创建好了#######################
-    create(opcodes_json, G, 0)
+    stack = []
+    memory = []
+    storage = []
+    for node in G:
+        if len(node.cfg_parent) == 0:
+            dfs(opcodes_json, G, node.belong_byte, stack, memory, storage)
     #################先假设控制流图创建好了#######################
     for node in G:
         source_id = node.node_id
@@ -15,42 +20,255 @@ def create_data_flow_graph(opcodes_json, G):
 
 
 # 创建数据流图
-def create(opcodes_json, G, now):
-    for node in G:
-        # 这些都是从Stack中读取内容，然后操作完再返回给stack的。
-        if node.node_content in ['ADD', 'MUL', 'SUB', 'DIV', 'SDIV', 'MOD', 'SMOD', 'ADDMOD', 'MULMOD', 'EXP',
-                                 'SIGNEXTEND', 'LT', 'GT', 'SLT', 'SGT', 'EQ', 'ISZERO', 'AND', 'OR', 'XOR',
-                                 'NOT', 'BYTE', 'SHL', 'SHR', 'SAR', 'SHA3', 'BALANCE', 'CALLDATALOAD', 'EXTCODESIZE',
-                                 'EXTCODEHASH', 'BLOCKHASH', 'CREATE', 'CALL', 'CALLCODE', 'DELEGATECALL', 'CREATE2',
-                                 'STATICCALL'] or \
-                str(node.node_content).startswith('DUP') or str(node.node_content).startswith('SWAP'):
-            G[-4].append_data_flow(node)
-            node.append_data_flow(G[-4])
-        # 直接将内容保存到Stack中,并不读取内容
-        elif node.node_content in ['ADDRESS', 'ORIGIN', 'CALLER', 'CALLVALUE', 'CALLDATASIZE', 'GASPRICE',
-                                   'RETURNDATASIZE', 'COINBASE', 'TIMESTAMP', 'NUMBER', 'PREVRANDAO', 'GASLIMIT',
-                                   'CHAINID', 'SELFBALANCE', 'BASEFEE', 'PC', 'MSIZE', 'GAS'] or \
-                str(node.node_content).startswith('PUSH'):
-            node.append_data_flow(G[-4])
-        # 从stack中弹出内容，并不存入内容
-        elif node.node_content in ['POP', 'JUMP', 'JUMPI', 'LOG0', 'LOG1', 'LOG2', 'LOG3', 'LOG4', 'RETURN', 'REVERT',
-                                   'SELFDESTRUCT']:
-            G[-4].append_data_flow(node)
-        # 读取stack的内容，保存到memory中。
-        elif node.node_content in ['CALLDATACOPY', 'EXTCODECOPY', 'RETURNDATACOPY', 'MSTORE', 'MSTORE8']:
-            G[-4].append_data_flow(node)
-            node.append_data_flow(G[-3])
-        # 栈和memory都被读取，但是往栈中写内容。
-        elif node.node_content in ['MLOAD']:
-            G[-4].append_data_flow(node)
-            G[-3].append_data_flow(node)
-            node.append_data_flow(G[-4])
-        # 读取stack的内容，保存到Storage中。
-        elif node.node_content in ['SSTORE']:
-            G[-4].append_data_flow(node)
-            node.append_data_flow(G[-3])
-        # 栈和Storarge都被读取，但是往栈中写内容。
-        elif node.node_content in ['SLOAD']:
-            G[-4].append_data_flow(node)
-            G[-2].append_data_flow(node)
-            node.append_data_flow(G[-4])
+# def create(opcodes_json, G, now):
+#     for node in G:
+#         # 这些都是从Stack中读取内容，然后操作完再返回给stack的。
+#         if node.node_content in ['ADD', 'MUL', 'SUB', 'DIV', 'SDIV', 'MOD', 'SMOD', 'ADDMOD', 'MULMOD', 'EXP',
+#                                  'SIGNEXTEND', 'LT', 'GT', 'SLT', 'SGT', 'EQ', 'ISZERO', 'AND', 'OR', 'XOR',
+#                                  'NOT', 'BYTE', 'SHL', 'SHR', 'SAR', 'SHA3', 'BALANCE', 'CALLDATALOAD', 'EXTCODESIZE',
+#                                  'EXTCODEHASH', 'BLOCKHASH', 'CREATE', 'CALL', 'CALLCODE', 'DELEGATECALL', 'CREATE2',
+#                                  'STATICCALL'] or \
+#                 str(node.node_content).startswith('DUP') or str(node.node_content).startswith('SWAP'):
+#             G[-4].append_data_flow(node)
+#             node.append_data_flow(G[-4])
+#         # 直接将内容保存到Stack中,并不读取内容
+#         elif node.node_content in ['ADDRESS', 'ORIGIN', 'CALLER', 'CALLVALUE', 'CALLDATASIZE', 'GASPRICE',
+#                                    'RETURNDATASIZE', 'COINBASE', 'TIMESTAMP', 'NUMBER', 'PREVRANDAO', 'GASLIMIT',
+#                                    'CHAINID', 'SELFBALANCE', 'BASEFEE', 'PC', 'MSIZE', 'GAS'] or \
+#                 str(node.node_content).startswith('PUSH'):
+#             node.append_data_flow(G[-4])
+#         # 从stack中弹出内容，并不存入内容
+#         elif node.node_content in ['POP', 'JUMP', 'JUMPI', 'LOG0', 'LOG1', 'LOG2', 'LOG3', 'LOG4', 'RETURN', 'REVERT',
+#                                    'SELFDESTRUCT']:
+#             G[-4].append_data_flow(node)
+#         # 读取stack的内容，保存到memory中。
+#         elif node.node_content in ['CALLDATACOPY', 'EXTCODECOPY', 'RETURNDATACOPY', 'MSTORE', 'MSTORE8']:
+#             G[-4].append_data_flow(node)
+#             node.append_data_flow(G[-3])
+#         # 栈和memory都被读取，但是往栈中写内容。
+#         elif node.node_content in ['MLOAD']:
+#             G[-4].append_data_flow(node)
+#             G[-3].append_data_flow(node)
+#             node.append_data_flow(G[-4])
+#         # 读取stack的内容，保存到Storage中。
+#         elif node.node_content in ['SSTORE']:
+#             G[-4].append_data_flow(node)
+#             node.append_data_flow(G[-3])
+#         # 栈和Storarge都被读取，但是往栈中写内容。
+#         elif node.node_content in ['SLOAD']:
+#             G[-4].append_data_flow(node)
+#             G[-2].append_data_flow(node)
+#             node.append_data_flow(G[-4])
+
+# 从当前节点沿着所有可能的控制流走下去，如果走完了，就将原来扣除的点数加回来。
+# opcodes是所有的操作码集合
+# G是已经建成的控制流图
+# stack_origin：操作数栈
+# memory_origin：memory
+# storage_origin
+def dfs(opcodes, G, now, stack_origin, memory_origin, storage_origin):
+    stack = stack_origin
+    memory = memory_origin
+    storage = storage_origin
+    while True:
+        if len(G[now].cfg_edge) > 1:  # 说明此处是分岔路口
+            for node in G[now].cfg_edge:
+                dfs(opcodes, G, node.belong_byte, stack[:], memory[:], storage[:])  # 代表从now移动到了新的控制流路线上。
+            break
+        else:  # 单路就一直往下走，并根据节点类型，处理数据流点数。
+            node_type = G[now].node_type
+            operator = node_type_operator[node_type]
+
+            for num in operator[0][0]:  # 操作数栈中的第num个节点，需要指向当前节点。
+                if len(stack) > num - 1:
+                    stack[num - 1].append_data_flow(G[now])
+            for i in range(len(operator[0][1])):  # 操作数栈中的第num个节点，不仅需要指向当前节点，还需要被删除掉。
+                if len(stack) > operator[0][1][0] - 1:
+                    stack[operator[0][1][0] - 1].append_data_flow(G[now])
+                    stack.pop(operator[0][1][0] - 1)  # 但是因为删除了以后，会导致数组变化，所以一直删除头一个序号上的元素。
+            for i in range(operator[0][2]):  # 当前的元素可以被消耗这么多次，所以需要反复插入。
+                stack.insert(0, G[now])
+
+            for num in operator[1][0]:  # 操作数栈中的第num个节点，需要指向当前节点。
+                if len(memory) > num - 1:
+                    memory[num - 1].append_data_flow(G[now])
+            for i in range(len(operator[1][1])):  # 操作数栈中的第num个节点，不仅需要指向当前节点，还需要被删除掉。
+                if len(memory) > operator[1][1][0] - 1:
+                    memory[operator[1][1][0] - 1].append_data_flow(G[now])
+                    memory.pop(operator[1][1][0] - 1)  # 但是因为删除了以后，会导致数组变化，所以一直删除头一个序号上的元素。
+            for i in range(operator[1][2]):  # 当前的元素可以被消耗这么多次，所以需要反复插入。
+                memory.insert(0, G[now])
+
+            for num in operator[2][0]:  # 操作数栈中的第num个节点，需要指向当前节点。
+                if len(storage) > num - 1:
+                    storage[num - 1].append_data_flow(G[now])
+            for i in range(len(operator[2][1])):  # 操作数栈中的第num个节点，不仅需要指向当前节点，还需要被删除掉。
+                if len(storage) > operator[2][1][0] - 1:
+                    storage[operator[2][1][0] - 1].append_data_flow(G[now])
+                    storage.pop(operator[2][1][0] - 1)  # 但是因为删除了以后，会导致数组变化，所以一直删除头一个序号上的元素。
+            for i in range(operator[2][2]):  # 当前的元素可以被消耗这么多次，所以需要反复插入。
+                storage.insert(0, G[now])
+
+            if operator.__len__() > 3:  # 代表这个节点的信息来自于global的信息
+                G[-2].append_data_flow(G[now])
+
+            # 操作全部结束以后，即控制流没有下一步了，退出循环。
+            if len(G[now].cfg_edge) == 0 or len(G[now].dfg_edge) > 1:
+                break
+            else:
+                now = G[now].cfg_edge[0].belong_byte
+
+
+node_type_operator = {
+    # 数组中记录的分别是:【【【引用栈中的序号】，【消耗栈中的序号】，还给栈中的数量】，
+    #                     【【引用Memory中的序号】，【消耗Memory中的序号】，还给Memory中的数量】，
+    #                     【【引用Storage中的序号】，【消耗Storage中的序号】，还给Storage中的数量】】
+    'SAMPLE': [[[], [], 0], [[], [], 0], [[], [], 0]],
+    'STOP': [[[], [], 0], [[], [], 0], [[], [], 0]],
+    'ADD': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'MUL': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SUB': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'DIV': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SDIV': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'MOD': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SMOD': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'ADDMOD': [[[], [1, 2, 3], 1], [[], [], 0], [[], [], 0]],
+    'MULMOD': [[[], [1, 2, 3], 1], [[], [], 0], [[], [], 0]],
+    'EXP': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SIGNEXTEND': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'LT': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'GT': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SLT': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SGT': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'EQ': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'ISZERO': [[[], [1], 1], [[], [], 0], [[], [], 0]],
+    'AND': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'OR': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'XOR': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'NOT': [[[], [1], 1], [[], [], 0], [[], [], 0]],
+    'BYTE': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SHL': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SHR': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SAR': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'SHA3': [[[], [1, 2], 1], [[], [], 0], [[], [], 0]],
+    'ADDRESS': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'BALANCE': [[[], [1], 1], [[], [], 0], [[], [], 0]],
+    'ORIGIN': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'CALLER': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'CALLVALUE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'CALLDATALOAD': [[[], [1], 1], [[], [], 0], [[], [], 0]],
+    'CALLDATASIZE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'CALLDATACOPY': [[[], [1, 2, 3], 0], [[], [], 1], [[], [], 0]],
+    'CODESIZE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'CODECOPY': [[[], [1, 2, 3], 0], [[], [], 1], [[], [], 0]],
+    'GASPRICE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'EXTCODESIZE': [[[], [1], 1], [[], [], 0], [[], [], 0]],
+    'EXTCODECOPY': [[[], [1, 2, 3, 4], 0], [[], [], 1], [[], [], 0]],
+    'RETURNDATASIZE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'RETURNDATACOPY': [[[], [1, 2, 3], 0], [[], [], 1], [[], [], 0]],
+    'EXTCODEHASH': [[[], [1], 1], [[], [], 0], [[], [], 0]],
+    'BLOCKHASH': [[[], [1], 1], [[], [], 0], [[], [], 0]],
+    'COINBASE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'TIMESTAMP': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'NUMBER': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'PREVRANDAO': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'GASLIMIT': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'CHAINID': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'SELFBALANCE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'BASEFEE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'POP': [[[], [1], 0], [[], [], 0], [[], [], 0]],
+    'MLOAD': [[[], [], 1], [[], [1], 0], [[], [], 0]],
+    'MSTORE': [[[], [1, 2], 0], [[], [], 1], [[], [], 0]],
+    'MSTORE8': [[[], [1, 2], 0], [[], [], 1], [[], [], 0]],
+    'SLOAD': [[[], [], 1], [[], [], 0], [[], [1], 0]],
+    'SSTORE': [[[], [1, 2], 0], [[], [], 0], [[], [], 1]],
+    'JUMP': [[[], [1], 0], [[], [], 0], [[], [], 0]],
+    'JUMPI': [[[], [1, 2], 0], [[], [], 0], [[], [], 0]],
+    'PC': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'MSIZE': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'GAS': [[[], [], 1], [[], [], 0], [[], [], 0], 'GLOBAL'],  # 需要特别注意，外部获取。
+    'JUMPDEST': [[[], [], 0], [[], [], 0], [[], [], 0]],
+    'PUSH0': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH1': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH2': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH3': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH4': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH5': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH6': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH7': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH8': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH9': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH10': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH11': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH12': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH13': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH14': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH15': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH16': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH17': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH18': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH19': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH20': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH21': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH22': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH23': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH24': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH25': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH26': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH27': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH28': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH29': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH30': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH31': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'PUSH32': [[[], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP1': [[[1], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP2': [[[2], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP3': [[[3], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP4': [[[4], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP5': [[[5], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP6': [[[6], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP7': [[[7], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP8': [[[8], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP9': [[[9], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP10': [[[10], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP11': [[[11], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP12': [[[12], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP13': [[[13], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP14': [[[14], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP15': [[[15], [], 1], [[], [], 0], [[], [], 0]],
+    'DUP16': [[[16], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP1': [[[1, 2], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP2': [[[1, 3], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP3': [[[1, 4], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP4': [[[1, 5], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP5': [[[1, 6], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP6': [[[1, 7], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP7': [[[1, 8], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP8': [[[1, 9], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP9': [[[1, 10], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP10': [[[1, 11], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP11': [[[1, 12], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP12': [[[1, 13], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP13': [[[1, 14], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP14': [[[1, 15], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP15': [[[1, 16], [], 1], [[], [], 0], [[], [], 0]],
+    'SWAP16': [[[1, 17], [], 1], [[], [], 0], [[], [], 0]],
+    'LOG0': [[[], [1, 2], 0], [[], [], 0], [[], [], 0]],
+    'LOG1': [[[], [1, 2], 0], [[], [], 0], [[], [], 0]],
+    'LOG2': [[[], [1, 2], 0], [[], [], 0], [[], [], 0]],
+    'LOG3': [[[], [1, 2], 0], [[], [], 0], [[], [], 0]],
+    'LOG4': [[[], [1, 2], 0], [[], [], 0], [[], [], 0]],
+    'CREATE': [[[], [1, 2, 3], 1], [[], [], 0], [[], [], 0]],
+    'CALL': [[[], [1, 2, 3, 4, 5, 6, 7], 1], [[], [], 0], [[], [], 0]],
+    'CALLCODE': [[[], [1, 2, 3, 4, 5, 6, 7], 1], [[], [], 0], [[], [], 0]],
+    'RETURN': [[[], [1, 2], 0], [[], [], 0], [[], [], 0]],
+    'DELEGATECALL': [[[], [1, 2, 3, 4, 5, 6], 1], [[], [], 0], [[], [], 0]],
+    'CREATE2': [[[], [1, 2, 3, 4], 1], [[], [], 0], [[], [], 0]],
+    'STATICCALL': [[[], [1, 2, 3, 4, 5, 6], 1], [[], [], 0], [[], [], 0]],
+    'REVERT': [[[], [1, 2], 0], [[], [], 0], [[], [], 0]],
+    'INVALID': [[[], [], 0], [[], [], 0], [[], [], 0]],
+    'SELFDESTRUCT': [[[], [1], 0], [[], [], 0], [[], [], 0]],
+    'HEX': [[[], [], 0], [[], [], 0], [[], [], 0]],
+    'GLOBAL': [[[], [], 0], [[], [], 0], [[], [], 0]],
+    'CONTRACT': [[[], [], 0], [[], [], 0], [[], [], 0]],
+}

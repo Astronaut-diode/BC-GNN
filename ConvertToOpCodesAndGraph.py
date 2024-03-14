@@ -125,9 +125,10 @@ def create_opcodes(bin_code, opcodes_file_path):
         else:
             utils.error("汇报，有新的操作码，0x" + str(value) + "还未加入操作列表!")
             exit(config.NEW_OPCODES)
-    opcodes.append("STACK")  # 外部合约，执行CALL指令以及CALLCODE的代码时就可以进行调用。这永远设定为倒数第4个节点。
-    opcodes.append("MEMORY")  # 外部合约，执行CALL指令以及CALLCODE的代码时就可以进行调用。这永远设定为倒数第3个节点。
-    opcodes.append("STORAGE")  # 外部合约，执行CALL指令以及CALLCODE的代码时就可以进行调用。这永远设定为倒数第2个节点。
+    # opcodes.append("STACK")  # 外部合约，执行CALL指令以及CALLCODE的代码时就可以进行调用。这永远设定为倒数第4个节点。
+    # opcodes.append("MEMORY")  # 外部合约，执行CALL指令以及CALLCODE的代码时就可以进行调用。这永远设定为倒数第3个节点。
+    # opcodes.append("STORAGE")  # 外部合约，执行CALL指令以及CALLCODE的代码时就可以进行调用。这永远设定为倒数第2个节点。
+    opcodes.append("GLOBAL")  # 全局信息，用于给BALANCE提供信息等操作。
     opcodes.append("CONTRACT")  # 外部合约，执行CALL指令以及CALLCODE的代码时就可以进行调用。这永远设定为倒数第1个节点。
     res_json = {
         'filepath': opcodes_file_path,
