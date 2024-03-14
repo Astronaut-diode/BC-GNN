@@ -44,12 +44,12 @@ for type in os.listdir(dataset_path):
                     "0.8.2": 0, "0.8.3": 0, "0.8.4": 0, "0.8.5": 0, "0.8.6": 0, "0.8.7": 0, "0.8.8": 0, "0.8.9": 0,
                     "0.8.10": 0, "0.8.11": 0, "0.8.12": 0, "0.8.13": 0,
                     "0.8.14": 0, "0.8.15": 0}
-    versions = list(version_hash.keys())[::-1]
+    versions = list(version_hash.keys())[::]
     for version in versions:
         utils.tip("切换为" + version + "版本，进行编译")
         cmd = f"/root/anaconda3/envs/lunikhod/bin/solc-select use {version}"
         subprocess.run(cmd, shell=True)
-        for i in range(1, os.listdir(dataset_type_path).__len__(), 1):
+        for i in range(1, os.listdir(dataset_type_path).__len__() + 1, 1):
             if os.listdir(f"{dataset_path}/{type}/bytecode/{i}").__len__() == 1:
                 cmd = f"/root/anaconda3/envs/lunikhod/bin/solc --bin -o {dataset_path}/{type}/bytecode/{i} {dataset_path}/{type}/bytecode/{i}/{i}.sol"
                 utils.tip(f"编译{i}文件夹")
