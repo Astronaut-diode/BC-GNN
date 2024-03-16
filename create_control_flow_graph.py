@@ -46,14 +46,22 @@ def dfs(opcodes_json, G, now):
         pass
     elif G[now].node_type == "JUMPI" and G[now].node_content == "JUMPI":  # 有条件的跳转
         if len(G[now].cfg_parent) == 1 and G[now].cfg_parent[0].node_type.startswith("PUSH"):
-            next_index = int(G[now].cfg_parent[0].node_content.split(' ')[1], 16)  # 找出父节点的操作指令指向的是哪里。
+            next_index = 0
+            if G[now].cfg_parent[0].node_content == 'PUSH0':
+                next_index = 0
+            else:
+                next_index = int(G[now].cfg_parent[0].node_content.split(' ')[1], 16)  # 找出父节点的操作指令指向的是哪里。
             if len(G) > next_index and G[next_index].node_type == "JUMPDEST":  # 必须是跳跃点才能进行跳跃
                 G[now].append_control_flow(G[next_index])
                 dfs(opcodes_json, G, next_index)  # 可以跳转到目标节点执行，也可能直接跳转到下一条指令执行。
                 dfs(opcodes_json, G, now + 1)
     elif G[now].node_type == "JUMP" and G[now].node_content == "JUMP":  # 无条件的跳转
         if len(G[now].cfg_parent) == 1 and G[now].cfg_parent[0].node_type.startswith("PUSH"):
-            next_index = int(G[now].cfg_parent[0].node_content.split(' ')[1], 16)  # 找出父节点的操作指令指向的是哪里。
+            next_index = 0
+            if G[now].cfg_parent[0].node_content == 'PUSH0':
+                next_index = 0
+            else:
+                next_index = int(G[now].cfg_parent[0].node_content.split(' ')[1], 16)  # 找出父节点的操作指令指向的是哪里。
             if len(G) > next_index and G[next_index].node_type == "JUMPDEST":  # 必须是跳跃点才能进行跳跃。
                 if not G[next_index].cfg_parent:  # 只有数组不为空的时候，才能往里面添加控制流，因为这是一条绝路，只能走一次。
                     G[now].append_control_flow(G[next_index])

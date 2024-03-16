@@ -11,10 +11,10 @@ import torch
 class contract_classification_model(MessagePassing):
     def __init__(self):
         super(contract_classification_model, self).__init__()
-        self.RGCNconv1 = RGCNConv(in_channels=300, out_channels=64, num_relations=2)
-        self.RGCNconv2 = RGCNConv(in_channels=64, out_channels=64, num_relations=2)
-        self.RGCNconv3 = RGCNConv(in_channels=64, out_channels=16, num_relations=2)
-        self.final_Linear = Linear(in_channels=16, out_channels=1)
+        self.RGCNconv1 = RGCNConv(in_channels=300, out_channels=256, num_relations=3)
+        self.RGCNconv2 = RGCNConv(in_channels=256, out_channels=128, num_relations=3)
+        self.RGCNconv3 = RGCNConv(in_channels=128, out_channels=32, num_relations=3)
+        self.final_Linear = Linear(in_channels=32, out_channels=1)
         self.dropout = Dropout(p=config.dropout_probability)
         self.relu = ReLU()
         self.sigmoid = Sigmoid()

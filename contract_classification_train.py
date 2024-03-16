@@ -89,16 +89,17 @@ def cal_score(predict_labels, y_labels):
     accuracy = tp.add(tn).div(tp.add(fp).add(tn).add(fn)).item()
     precision = tp.div(tp.add(fp)).item()
     recall = tp.div(tp.add(fn)).item()
+    fpr = fp.div(fp.add(tn)).item()
     f_score = tp.mul(1 + config.beta ** 2).div(
         tp.mul(1 + config.beta ** 2).add(fn.mul(config.beta ** 2).add(fp).add(config.epsilon))).item()
     utils.tip(f"tp:{tp.item()}, fp:{fp.item()}, tn:{tn.item()}, fn:{fn.item()}")
-    utils.tip(f"accuracy:{accuracy}, precision:{precision}, recall:{recall}, f_score:{f_score}")
+    utils.tip(f"accuracy:{accuracy}, precision:{precision}, recall:{recall}, fpr:{fpr} f_score:{f_score}")
 
 
 # 准备找出效果最好的阈值，待会用于分类使用。
 def get_best_metric(train_all_predicts, train_all_labels):
     # 求出其中的最佳值，然后返回。
-    best_res = {"probability": 0, "accuracy": 0, "precision": 0, "recall": 0, "f_score": 0}
+    best_res = {"probability": 0, "accuracy": 0, "precision": 0, "recall": 0, "f_score": 0, "fpr": 0}
     # 取出所有的不同的概率，然后将概率转换为0和1的predict_matrix矩阵,注意，如果种类太多，会导致GPU都存不下，所以需要少取一些，这里取步长为100好了。
     unique_probability = torch.unique(train_all_predicts).reshape(-1, 1)
     # 通过步长重新选取，免得取得太多了，内存爆炸。
@@ -116,6 +117,7 @@ def get_best_metric(train_all_predicts, train_all_labels):
     recall = tp.div(tp.add(fn))
     f_score = tp.mul(1 + config.beta ** 2).div(
         tp.mul(1 + config.beta ** 2).add(fn.mul(config.beta ** 2).add(fp).add(config.epsilon)))
+    fpr = fp.div(fp.add(tn))
     # 根据p和r的和，决定谁是效果最好的，直接返回这组结果。
     # best_sample_index = precision.add(recall).add(accuracy).add(f_score).argmax(dim=0)
     # 改成求出最大的f分数
@@ -125,10 +127,12 @@ def get_best_metric(train_all_predicts, train_all_labels):
     best_res["accuracy"] = accuracy[best_sample_index, 0]
     best_res["precision"] = precision[best_sample_index, 0]
     best_res["recall"] = recall[best_sample_index, 0]
+    best_res["fpr"] = fpr[best_sample_index, 0]
     best_res["f_score"] = f_score[best_sample_index, 0]
     utils.tip(f"当使用最好的阈值{best_res['probability'].item()}时，得到的结果为:")
     utils.tip(f'accuracy:{best_res["accuracy"].item()}')
     utils.tip(f'precision:{best_res["precision"].item()}')
     utils.tip(f'recall:{best_res["recall"].item()}')
+    utils.tip(f'fpr:{best_res["fpr"].item()}')
     utils.tip(f'f_score:{best_res["f_score"].item()}')
     return best_res["probability"]

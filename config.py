@@ -9,23 +9,6 @@ sys.setrecursionlimit(5000)
 # 当前这个BC-GNN项目的路径。
 BC_GNN_PROJECT_DIR_PATH = os.path.abspath(os.curdir)
 
-# 资源文件夹的路径。
-RESOURCES_DIR_PATH = f'{BC_GNN_PROJECT_DIR_PATH}/resources'
-utils.create_folder_if_not_exists(RESOURCES_DIR_PATH)
-# 所有的待训练字节码都会以文件夹的形式保存在这个目录中，这都是原始样本数据。
-BYTECODE_DIR_PATH = f'{RESOURCES_DIR_PATH}/bytecode'
-utils.create_folder_if_not_exists(BYTECODE_DIR_PATH)
-# 所有的待训练操作码都会以文件夹的形式保存在这个目录中，这都是经过数据处理以后的结果。
-TRAIN_DATA_DIR_PATH = f'{RESOURCES_DIR_PATH}/train'
-utils.create_folder_if_not_exists(TRAIN_DATA_DIR_PATH)
-# 词库预训练模型的保存位置。
-CORPUS_FILE_PATH = f'{RESOURCES_DIR_PATH}/corpus_model.pkl'
-# 标签文件的标准位置。
-LABELS_PATH = f'{RESOURCES_DIR_PATH}/labels.json'
-# 训练模型的文件夹,保存数据集.pt以及训练以后得到的模型。
-CLASSIFICATION_DIR_PATH = f'{BC_GNN_PROJECT_DIR_PATH}/classification'
-utils.create_folder_if_not_exists(CLASSIFICATION_DIR_PATH)
-
 ############################## ERROR CODE ##############################
 NEW_OPCODES = -102
 ############################## ERROR CODE ##############################
@@ -72,9 +55,11 @@ parser.add_argument('--learning_change_epoch', type=int, default=10,
 parser.add_argument('--epoch_size', type=int, default=50,
                     help="分多少世代(默认为50):\n"
                          "直接输入整数。\n")
-parser.add_argument('--batch_size', type=int, default=32,
-                    help="一次同时处理多少数据(默认为32):\n"
+parser.add_argument('--batch_size', type=int, default=1,
+                    help="一次同时处理多少数据(默认为1):\n"
                          "直接输入整数。\n")
+parser.add_argument('--attack_type', type=str,
+                    help="数据文件夹的名字:\n")
 # 下面更新config配置
 args = parser.parse_args()
 create_word2vec = args.create_word2vec
@@ -91,5 +76,32 @@ learning_change_epoch = args.learning_change_epoch
 learning_change_gamma = args.learning_change_gamma
 # 批处理数量
 epoch_size = args.epoch_size
+attack_type = args.attack_type
 dropout_probability = args.dropout_probability
 batch_size = args.batch_size
+utils.tip(f"device:{device}")
+utils.tip(f"learning_rate:{learning_rate}")
+utils.tip(f"weight_decay:{weight_decay}")
+utils.tip(f"learning_change_epoch:{learning_change_epoch}")
+utils.tip(f"learning_change_gamma:{learning_change_gamma}")
+utils.tip(f"epoch_size:{epoch_size}")
+utils.tip(f"dropout_probability:{dropout_probability}")
+utils.tip(f"batch_size:{batch_size}")
+utils.tip(f"attack_type:{attack_type}")
+
+# 资源文件夹的路径。
+RESOURCES_DIR_PATH = f'{BC_GNN_PROJECT_DIR_PATH}/{attack_type}/resources'
+utils.create_folder_if_not_exists(RESOURCES_DIR_PATH)
+# 所有的待训练字节码都会以文件夹的形式保存在这个目录中，这都是原始样本数据。
+BYTECODE_DIR_PATH = f'{RESOURCES_DIR_PATH}/bytecode'
+utils.create_folder_if_not_exists(BYTECODE_DIR_PATH)
+# 所有的待训练操作码都会以文件夹的形式保存在这个目录中，这都是经过数据处理以后的结果。
+TRAIN_DATA_DIR_PATH = f'{RESOURCES_DIR_PATH}/train'
+utils.create_folder_if_not_exists(TRAIN_DATA_DIR_PATH)
+# 词库预训练模型的保存位置。
+CORPUS_FILE_PATH = f'{RESOURCES_DIR_PATH}/corpus_model.pkl'
+# 标签文件的标准位置。
+LABELS_PATH = f'{RESOURCES_DIR_PATH}/labels.json'
+# 训练模型的文件夹,保存数据集.pt以及训练以后得到的模型。
+CLASSIFICATION_DIR_PATH = f'{BC_GNN_PROJECT_DIR_PATH}/{attack_type}/classification'
+utils.create_folder_if_not_exists(CLASSIFICATION_DIR_PATH)
