@@ -57,6 +57,8 @@ def contract_classification_train(total_dataset):
     utils.tip("验证阶段结束，开始计算最终评估指标。")
     test_end_time = datetime.datetime.now()
 
+    utils.save_json({"origin_predict": predict_labels.cpu().detach().numpy().tolist(), "origin_y": y_labels.cpu().detach().numpy().tolist()}, f"{config.RESOURCES_DIR_PATH}/{config.attack_type}_ROC.json")
+
     utils.tip(f"本次训练一共耗时{train_end_time - train_start_time}秒, 本次测试一共耗时{test_end_time - test_start_time}秒")
     utils.tip(f"本次的训练合约数为{len(train_dataset)}个, 测试的合约数为{len(test_dataset)}个")
     node_count = 0
@@ -75,7 +77,12 @@ def contract_classification_train(total_dataset):
         edge_count += sample.edge_index.shape[1]
         mali_count += int(sample.y.item())
     utils.tip(f"本次测试集中，一共有{node_count}个节点，{edge_count}条边，良性合约为{len(test_dataset) - mali_count}, 恶性合约为{mali_count}")
-    cal_score(predict_labels, y_labels)
+    f_score = cal_score(predict_labels, y_labels)
+    utils.create_folder_if_not_exists(f'{config.model_data_dir}')
+    torch.save({'model_params': model.state_dict(), "best_threshold": config.threshold},
+               f'{config.model_data_dir}/{f_score}.pth')
+    utils.success(
+        f"模型保存完毕,路径为{config.model_data_dir}/{f_score}.pth")
 
 
 # 根据计算出的标签以及原始标签，求出对应的评估指标。
@@ -94,6 +101,7 @@ def cal_score(predict_labels, y_labels):
         tp.mul(1 + config.beta ** 2).add(fn.mul(config.beta ** 2).add(fp).add(config.epsilon))).item()
     utils.tip(f"tp:{tp.item()}, fp:{fp.item()}, tn:{tn.item()}, fn:{fn.item()}")
     utils.tip(f"accuracy:{accuracy}, precision:{precision}, recall:{recall}, fpr:{fpr} f_score:{f_score}")
+    return f_score
 
 
 # 准备找出效果最好的阈值，待会用于分类使用。

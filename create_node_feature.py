@@ -48,11 +48,19 @@ def create_node_feature(json_path, graph_path, word2vec_model, label_dict):
         edge[1] = hash_map[edge[1]]
 
     # 最终需要保存的图数据。
-    graph_data = {
-        'node_feature': node_feature_list,
-        'cfg_edge': content['CFG'],
-        'dfg_edge': content['DFG'],
-        'label': label_dict[target_name],
-    }
+    graph_data = {}
+    if config.run_mode == "train":
+        graph_data = {
+            'node_feature': node_feature_list,
+            'cfg_edge': content['CFG'],
+            'dfg_edge': content['DFG'],
+            'label': label_dict[target_name],
+        }
+    else:  # 预测模式不需要加载标签
+        graph_data = {
+            'node_feature': node_feature_list,
+            'cfg_edge': content['CFG'],
+            'dfg_edge': content['DFG'],
+        }
     utils.save_json(graph_data, graph_path)  # 将图数据保存到图路径上。
     json_file.close()

@@ -17,13 +17,14 @@ for type in os.listdir(dataset_path):
     new_label = {}
 
     for count, file in enumerate(os.listdir(dataset_type_path)):
-        basename = file.split(".")[0]
-        for label in content:
-            if str(label['contract_name']).startswith(basename + "-"):
-                new_name = str(label['contract_name']).replace(basename, str(count + 1), 1).replace(".sol", ".bin")
-                new_label[new_name] = label['targets']
         utils.create_folder_if_not_exists(f'{dataset_path}/{type}/bytecode/{count + 1}')
-        shutil.copy(f'{dataset_type_path}/{file}', f'{dataset_path}/{type}/bytecode/{count + 1}/{count + 1}.sol')
+        for f in os.listdir(f'{dataset_type_path}/{file}'):
+            shutil.copy(f'{dataset_type_path}/{file}/{f}', f'{dataset_path}/{type}/bytecode/{count + 1}/{count + 1}.sol')
+            basename = f.split(".")[0]
+            for label in content:
+                if str(label['contract_name']).startswith(basename + "-"):
+                    new_name = str(label['contract_name']).replace(basename, str(count + 1), 1).replace(".sol", ".bin")
+                    new_label[new_name] = label['targets']
     json_file = f"{dataset_path}/{type}/labels.json"
 
     if not os.path.exists(json_file):

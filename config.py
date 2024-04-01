@@ -60,6 +60,10 @@ parser.add_argument('--batch_size', type=int, default=1,
                          "直接输入整数。\n")
 parser.add_argument('--attack_type', type=str,
                     help="数据文件夹的名字:\n")
+parser.add_argument('--target_dir', type=str, default='',
+                    help="预测文件夹的名字:\n")
+parser.add_argument('--target_file', type=str, default='',
+                    help="预测文件的名字:\n")
 # 下面更新config配置
 args = parser.parse_args()
 create_word2vec = args.create_word2vec
@@ -79,6 +83,8 @@ epoch_size = args.epoch_size
 attack_type = args.attack_type
 dropout_probability = args.dropout_probability
 batch_size = args.batch_size
+target_dir = args.target_dir
+target_file = args.target_file
 utils.tip(f"device:{device}")
 utils.tip(f"learning_rate:{learning_rate}")
 utils.tip(f"weight_decay:{weight_decay}")
@@ -88,6 +94,8 @@ utils.tip(f"epoch_size:{epoch_size}")
 utils.tip(f"dropout_probability:{dropout_probability}")
 utils.tip(f"batch_size:{batch_size}")
 utils.tip(f"attack_type:{attack_type}")
+utils.tip(f"target_dir:{target_dir}")
+utils.tip(f"target_file:{target_file}")
 
 # 资源文件夹的路径。
 RESOURCES_DIR_PATH = f'{BC_GNN_PROJECT_DIR_PATH}/{attack_type}/resources'
@@ -105,3 +113,9 @@ LABELS_PATH = f'{RESOURCES_DIR_PATH}/labels.json'
 # 训练模型的文件夹,保存数据集.pt以及训练以后得到的模型。
 CLASSIFICATION_DIR_PATH = f'{BC_GNN_PROJECT_DIR_PATH}/{attack_type}/classification'
 utils.create_folder_if_not_exists(CLASSIFICATION_DIR_PATH)
+# 装载模型的文件夹
+model_data_dir = f"{RESOURCES_DIR_PATH}/model"
+utils.create_folder_if_not_exists(model_data_dir)
+# 装在等待预测数据的文件夹
+PREDICT_DIR_PATH = f"{RESOURCES_DIR_PATH}/wait_predict"
+utils.create_folder_if_not_exists(PREDICT_DIR_PATH)

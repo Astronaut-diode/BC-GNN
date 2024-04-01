@@ -33,7 +33,9 @@ def create_control_flow_graph(opcodes_json, G):
 
 
 def dfs(opcodes_json, G, now):
-    assert now < len(G), "不能继续搜索了，否则越界了。"
+    if not now < len(G):
+        print("不能继续搜索了，否则越界了。")
+        return
     if G[now].node_type == 'HEX' and G[now].node_content == 'NULL':  # 这种节点是并不需要连接控制流的，作为孤立节点即可。
         pass
     elif G[now].node_type == "REVERT" and G[now].node_content == "REVERT":  # 回滚操作，不再继续深度递归
