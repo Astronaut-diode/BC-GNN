@@ -5,6 +5,14 @@
 
 因为AST-GNN(MVD-HG)仅能够作用于源代码，所以需要进一步的创建一个可以作用于字节码的研究工作。这里首先从字节码中提取操作码，之后在操作码的基础上提取控制流图和数据流图以形成异构图，最终使用异构图以及图神经网络实现漏洞检测任务。
 
+总体框架如下所示：
+
+![bc-gnn](https://github.com/Astronaut-diode/BC-GNN/assets/57606131/ac050c2b-f995-4f94-b191-05aeb53fe06e)
+
+得到的异构图案例如下所示：
+
+![bc-gnn1](https://github.com/Astronaut-diode/BC-GNN/assets/57606131/c5995afb-f0e9-45e8-92d0-f51776c17725)
+
 ## Usage
 
 在dataset.zip和rt_dataset.zip中分别保存了全体字节码和runtime部分的字节码的压缩包，解压缩以后按照python main.py --help的指示一个个填入参数即可。如下所示：
