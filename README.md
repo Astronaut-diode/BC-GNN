@@ -15,7 +15,7 @@
 
 ## Usage
 
-在dataset.zip和rt_dataset.zip中分别保存了全体字节码和runtime部分的字节码的压缩包，解压缩以后按照python main.py --help的指示一个个填入参数即可。如下所示：
+在dataset.zip和rt_dataset.zip中分别保存了全体字节码和runtime部分的字节码的压缩包，解压缩以后按照python main.py --help的指示一个个填入参数即可，BC-GNN虚拟环境与MVD-HG使用的是相同的，可以直接复用。如下所示：
 ``` bash
 (lunikhod) root@0efc54cd086a:~/BC-GNN# python main.py --help
 usage: main.py [-h] [--run_mode RUN_MODE] [--create_word2vec CREATE_WORD2VEC] [--device DEVICE] [--learning_rate LEARNING_RATE] [--weight_decay WEIGHT_DECAY]
